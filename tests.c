@@ -98,9 +98,11 @@ bool should_add_at_last_index() {
     cc_array_add(a, (void*) 2);
     cc_array_add_at(a, (void*) 100, tail_index);
 
-    void* element;
-    cc_array_get_at(a, 2, &element);
+    if(a->size != 3){
+        return false;
+    }
 
+    void* element;
     for (size_t i = 0; i < cc_array_size(a); i++) {
         cc_array_get_at(a, i, &element);
         if (i == tail_index) {
@@ -149,15 +151,20 @@ bool should_return_error_when_index_is_bigger_and_index_is_0() {
 bool should_expand_GROUPADDAT(){
     CC_Array* a;
     int tail_index = 0;
+    int array_size = 10;
 
     ASSERT_CC_OK(cc_array_new(&a));
 
     a->capacity = CC_MAX_ELEMENTS;
-    a->size = 10;
+    a->size = array_size;
 
     bool res = cc_array_add_at(a, (void*) 1, tail_index);
 
     if(res != CC_OK){
+        return false;
+    }
+
+    if(a->size != array_size+1){
         return false;
     }
 
