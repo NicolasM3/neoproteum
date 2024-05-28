@@ -14,15 +14,15 @@
 int array_elements_ammout = DEFAULT_CAPACITY - 2;
 bool should_not_expand() {
     CC_Array* a;
-
     ASSERT_CC_OK(cc_array_new(&a));
-
     a->size = array_elements_ammout;
+
+    cc_array_add(a, (void*) 1);
 
     if(cc_array_capacity(a) != DEFAULT_CAPACITY){
         return false;
     }
-    if(cc_array_size(a) != array_elements_ammout){
+    if(cc_array_size(a) == array_elements_ammout){
         return false;
     }
 
@@ -33,34 +33,34 @@ bool should_not_expand() {
 bool should_expand_when_size_is_bigger() {
     array_elements_ammout = DEFAULT_CAPACITY + 1;
     CC_Array* a;
-
     ASSERT_CC_OK(cc_array_new(&a));
-
     a->size = array_elements_ammout;
+    
+    cc_array_add(a, (void*) 1);
 
     if(cc_array_capacity(a) == DEFAULT_CAPACITY){
         return false;
     }
-    if(cc_array_size(a) != array_elements_ammout){
+    if(cc_array_size(a) == array_elements_ammout){
         return false;
     }
 
     return true;
 }
 
-// -- When array is equal then DEFAULT_CAPACITY
+// -- When array is equal to DEFAULT_CAPACITY
 bool should_expand_when_size_is_equal() {
     array_elements_ammout = DEFAULT_CAPACITY;
     CC_Array* a;
-
     ASSERT_CC_OK(cc_array_new(&a));
-
     a->size = array_elements_ammout;
+
+    cc_array_add(a, (void*) 1);
 
     if(cc_array_capacity(a) == DEFAULT_CAPACITY){
         return false;
     }
-    if(cc_array_size(a) != array_elements_ammout){
+    if(cc_array_size(a) == array_elements_ammout){
         return false;
     }
 
