@@ -113,15 +113,16 @@ bool should_add_at_last_index() {
     return true;
 }
 
-// -- When index is bigger then size
+
+// -- When index is bigger then size - 1
 bool should_return_error_when_index_is_bigger() {
     CC_Array* a;
-    int tail_index = 100;
+    int index = 100;
 
     ASSERT_CC_OK(cc_array_new(&a));
 
     void* element;
-    bool res = cc_array_get_at(a, tail_index, &element);
+    bool res = cc_array_add_at(a, &element, index);
 
     if(res == CC_OK){
         return false;
@@ -130,17 +131,18 @@ bool should_return_error_when_index_is_bigger() {
     return true;
 }
 
-// -- When index is equal than size but index is 0 too
+
+// -- When size is equal to 0 but index is not 0
 bool should_return_error_when_index_is_bigger_and_index_is_0() {
     CC_Array* a;
-    int tail_index = 0;
+    int tail_index = 2;
 
     ASSERT_CC_OK(cc_array_new(&a));
 
     void* element;
-    bool res = cc_array_get_at(a, tail_index, &element);
+    bool res = cc_array_add_at(a, &element, tail_index);
 
-    if(res != CC_OK){
+    if(res == CC_OK){
         return false;
     }
     
@@ -191,6 +193,120 @@ bool should_not_expand_GROUPADDAT() {
     return true;
 }
 
+// -- General cases that should return ok
+bool cc_array_add_at_general_tests() {
+    CC_Array* a;
+    int tail_index = 0;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    bool res = cc_array_add_at(a, (void*) 100, 0);     // Should add at first index
+    ASSERT_CC_OK(res);
+    if(res != CC_OK){return false;}
+
+    res = cc_array_add_at(a, (void*) 200, 0);          // Should add at second index
+    ASSERT_CC_OK(res);
+    if(res != CC_OK){return false;}
+
+    res = cc_array_add_at(a, (void*) 200, 2);          // Should add at second index
+    ASSERT_CC_OK(res);
+    if(res != CC_OK){return false;}
+
+    return true;
+}
+
+// Test swapping elements in the array
+// -- When index is bigger or equal then size 
+bool should_return_a_error_GROUPARRAYSWAPAT() {
+    CC_Array* a;
+    int indexBigger = 100;
+    int index2 = 0;
+    int array_size = 10;
+
+    a->size = array_size;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    // One index is bigger then size
+    bool res = cc_array_swap_at(a, indexBigger, index2);
+    if(res == CC_OK){return false;}
+    res = cc_array_swap_at(a, index2, indexBigger);
+    if(res == CC_OK){return false;}
+    // index is equal to size
+    res = cc_array_swap_at(a, array_size, indexBigger);
+    if(res == CC_OK){return false;}
+    res = cc_array_swap_at(a, indexBigger, array_size);
+    if(res == CC_OK){return false;}
+    // Both index are bigger the size
+    res = cc_array_swap_at(a, indexBigger, indexBigger);
+    if(res == CC_OK){return false;}
+    // Both index are equal to size
+    res = cc_array_swap_at(a, array_size, array_size);
+    if(res == CC_OK){return false;}
+
+    return true;
+}
+
+// Test filtering elements in the array
+// -- When size is not equal 0
+bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    // size is bigger than 0
+    a->size = 10;
+    bool res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res != CC_OK){ return false; }
+
+    // size i lower than 0
+    a->size = -1;
+    res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res != CC_OK){ return false; }
+
+    // size is equal to 0
+    a->size = 0;
+    res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res == CC_OK){ return false; }
+
+    return true;
+} 
+
+// Test reducing elements in the array
+// -- When size is 1 
+bool should_return_the_value_of_first_element_GROUPARRAYREDUCE() {
+    void *first_element = (void*) 10;
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_add(a, (void*) first_element);
+
+    void *result = 0;
+    cc_array_reduce(a, (void (*)(void *, void *, void *)) 1, &result);
+    if(result != first_element){return false;}
+
+    return true;
+}
+
+// When size is not 1 
+bool should_not_return_the_value_of_first_element_GROUPARRAYREDUCE() {
+    void *first_element = (void*) 10;
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_add(a, (void*) first_element);
+
+    // size is bigger than 1
+    a->size = 10;
+    void *result = 0;
+    cc_array_reduce(a, (void (*)(void *, void *, void *)) 1, &result);
+    if(result == first_element){return false;}
+
+    // size is lower than 1
+    a->size = -1;
+    result = 0;
+    cc_array_reduce(a, (void (*)(void *, void *, void *)) 1, &result);
+    if(result == first_element){return false;}
+
+    return true;
+}
 
 test_t TESTS[] = {
     // arrya_add
@@ -204,5 +320,11 @@ test_t TESTS[] = {
     &should_return_error_when_index_is_bigger_and_index_is_0,
     &should_expand_GROUPADDAT,
     &should_not_expand_GROUPADDAT,
+    &cc_array_add_at_general_tests,
+    // cc_array_swap_at
+    &should_return_a_error_GROUPARRAYSWAPAT,
+    // cc_array_filter_mut
+    &should_return_CC_OK_GROUPARRAYFILTERMUT,
+    // cc_array_reduce
     NULL
 };
