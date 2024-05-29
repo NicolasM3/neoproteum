@@ -228,21 +228,21 @@ bool should_return_a_error_GROUPARRAYSWAPAT() {
     ASSERT_CC_OK(cc_array_new(&a));
 
     // One index is bigger then size
-    bool res = cc_array_swap_at(a, indexBigger, index2);
-    if(res == CC_OK){return false;}
+    int res = cc_array_swap_at(a, indexBigger, index2);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
     res = cc_array_swap_at(a, index2, indexBigger);
-    if(res == CC_OK){return false;}
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
     // index is equal to size
     res = cc_array_swap_at(a, array_size, indexBigger);
-    if(res == CC_OK){return false;}
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
     res = cc_array_swap_at(a, indexBigger, array_size);
-    if(res == CC_OK){return false;}
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
     // Both index are bigger the size
     res = cc_array_swap_at(a, indexBigger, indexBigger);
-    if(res == CC_OK){return false;}
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
     // Both index are equal to size
     res = cc_array_swap_at(a, array_size, array_size);
-    if(res == CC_OK){return false;}
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
 
     return true;
 }
@@ -255,18 +255,18 @@ bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
 
     // size is bigger than 0
     a->size = 10;
-    bool res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res != CC_OK){ return false; }
+    int res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
 
     // size i lower than 0
     a->size = -1;
     res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res != CC_OK){ return false; }
+    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
 
     // size is equal to 0
     a->size = 0;
     res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res == CC_OK){ return false; }
+    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
 
     return true;
 } 
