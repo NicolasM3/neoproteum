@@ -233,9 +233,9 @@ bool should_return_a_error_GROUPARRAYSWAPAT() {
     res = cc_array_swap_at(a, index2, indexBigger);
     if(res != CC_ERR_OUT_OF_RANGE){return false;}
     // index is equal to size
-    res = cc_array_swap_at(a, array_size, indexBigger);
+    res = cc_array_swap_at(a, array_size, index2);
     if(res != CC_ERR_OUT_OF_RANGE){return false;}
-    res = cc_array_swap_at(a, indexBigger, array_size);
+    res = cc_array_swap_at(a, index2, array_size);
     if(res != CC_ERR_OUT_OF_RANGE){return false;}
     // Both index are bigger the size
     res = cc_array_swap_at(a, indexBigger, indexBigger);
