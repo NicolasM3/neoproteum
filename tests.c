@@ -153,26 +153,22 @@ bool should_return_error_when_index_is_bigger_and_index_is_0() {
 bool should_expand_GROUPADDAT(){
     CC_Array* a;
     int tail_index = 0;
-    int array_size = 10;
+    int array_size = DEFAULT_CAPACITY + 1;
 
     ASSERT_CC_OK(cc_array_new(&a));
-
-    a->capacity = CC_MAX_ELEMENTS;
+    a->capacity = DEFAULT_CAPACITY;
     a->size = array_size;
-
     int res = cc_array_add_at(a, (void*) 1, tail_index);
+    if(a->capacity == DEFAULT_CAPACITY){return false;}
 
-    if(res != CC_ERR_OUT_OF_RANGE){
-        return false;
-    }
-
-    if(a->size != array_size+1){
-        return false;
-    }
+    ASSERT_CC_OK(cc_array_new(&a));
+    a->capacity = DEFAULT_CAPACITY;
+    a->size = DEFAULT_CAPACITY;
+    res = cc_array_add_at(a, (void*) 1, tail_index);
+    if(a->capacity == DEFAULT_CAPACITY){return false;}
 
     return true;
 }
-
 
 // -- When index array size is bigger or equal then capacity but can't expand
 bool should_not_expand_GROUPADDAT() {
@@ -498,30 +494,22 @@ bool should_do_not_throw_CC_ERR_ALLOC(){
     CC_Array* a;
     CC_Array* b;
 
+    // size is smaller than capacity and capacity is the maxx
     cc_array_new(&a);
     cc_array_new(&b);
-
-    // size is smaller than capacity
     a->size = 0;
-    a->capacity = DEFAULT_CAPACITY;
+    a->capacity = CC_MAX_ELEMENTS;
     cc_array_zip_iter_init(iter, a, b);
     int res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
-    if(res == CC_ERR_ALLOC){return false;}
+    if(res != CC_OK){return false;} 
 
-    cc_array_zip_iter_init(iter, a, b);
+    cc_array_new(&a);
+    cc_array_new(&b);
+    a->size = 0;
+    a->capacity = CC_MAX_ELEMENTS;
+    cc_array_zip_iter_init(iter, b, a);
     res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
-    if(res == CC_ERR_ALLOC){return false;}
-
-    // size is bigget than capacity
-    a->size = DEFAULT_CAPACITY + 1;
-    a->capacity = DEFAULT_CAPACITY;
-    cc_array_zip_iter_init(iter, a, b);
-    res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
-    if(res == CC_ERR_ALLOC){return false;} 
-
-     cc_array_zip_iter_init(iter, b, a);
-    res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
-    if(res == CC_ERR_ALLOC){return false;} 
+    if(res != CC_OK){return false;} 
 
     return true;
 }
@@ -542,7 +530,11 @@ bool should_return_ok_GROUPZIPITERADD(){
     int res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
     if(res == CC_ERR_ALLOC){return false;}
 
-    cc_array_zip_iter_init(iter, a, b);
+    cc_array_new(&a);
+    cc_array_new(&b);
+    a->size = DEFAULT_CAPACITY;
+    a->capacity = DEFAULT_CAPACITY;
+    cc_array_zip_iter_init(iter, b, a);
     res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
     if(res == CC_ERR_ALLOC){return false;}
 
@@ -555,16 +547,19 @@ bool should_return_error_GROUPZIPITERADD(){
     CC_Array* a;
     CC_Array* b;
 
+    // size is equal than capacity
     cc_array_new(&a);
     cc_array_new(&b);
-
-    // size is equal than capacity
-    a->size = CC_ERR_MAX_CAPACITY;
-    a->capacity = CC_ERR_MAX_CAPACITY;
+    a->size = CC_MAX_ELEMENTS;
+    a->capacity = CC_MAX_ELEMENTS;
     cc_array_zip_iter_init(iter, a, b);
     int res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
     if(res != CC_ERR_ALLOC){return false;}
 
+    cc_array_new(&a);
+    cc_array_new(&b);
+    a->size = CC_MAX_ELEMENTS;
+    a->capacity = CC_MAX_ELEMENTS;
     cc_array_zip_iter_init(iter, a, b);
     res = cc_array_zip_iter_add(iter, (void*) 2, (void*) 1);
     if(res != CC_ERR_ALLOC){return false;}
@@ -584,10 +579,9 @@ test_t TESTS[] = {
      &should_add_at_last_index,
      &should_return_error_when_index_is_bigger,
     // &should_return_error_when_index_is_bigger_and_index_is_0,
-    // &should_expand_GROUPADDAT,
+    //  &should_expand_GROUPADDAT,
      &should_not_expand_GROUPADDAT,
      &cc_array_add_at_general_tests,
-
     // cc_array_filter_mut
     // &should_return_CC_OK_GROUPARRAYFILTERMUT,
     // cc_array_reduce
@@ -605,9 +599,9 @@ test_t TESTS[] = {
     &should_replace_elementes_when_iter_index_minus_one_less_ar1_size_and_greater_ar2_size,
 
     //cc_array_zip_iter_add
-    // &should_do_not_throw_CC_ERR_ALLOC,
+    &should_do_not_throw_CC_ERR_ALLOC,
     &should_return_ok_GROUPZIPITERADD,
-    // &should_return_error_GROUPZIPITERADD,
+    &should_return_error_GROUPZIPITERADD,
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
