@@ -76,9 +76,9 @@ bool should_return_error_while_expand() {
     a->capacity = CC_MAX_ELEMENTS;
     a->size = CC_MAX_ELEMENTS;
 
-    bool res = cc_array_add(a, (void*) 1);
-
-    if(res == CC_OK){
+    int res = cc_array_add(a, (void*) 1);
+   
+    if(res != CC_ERR_MAX_CAPACITY){
         return false;
     }
 
@@ -140,9 +140,9 @@ bool should_return_error_when_index_is_bigger_and_index_is_0() {
     ASSERT_CC_OK(cc_array_new(&a));
 
     void* element;
-    bool res = cc_array_add_at(a, &element, tail_index);
+    int res = cc_array_add_at(a, &element, tail_index);
 
-    if(res == CC_OK){
+    if(res != CC_ERR_OUT_OF_RANGE){
         return false;
     }
     
@@ -160,9 +160,9 @@ bool should_expand_GROUPADDAT(){
     a->capacity = CC_MAX_ELEMENTS;
     a->size = array_size;
 
-    bool res = cc_array_add_at(a, (void*) 1, tail_index);
+    int res = cc_array_add_at(a, (void*) 1, tail_index);
 
-    if(res != CC_OK){
+    if(res != CC_ERR_OUT_OF_RANGE){
         return false;
     }
 
@@ -184,9 +184,9 @@ bool should_not_expand_GROUPADDAT() {
     a->capacity = CC_MAX_ELEMENTS;
     a->size = CC_MAX_ELEMENTS;
 
-    bool res = cc_array_add_at(a, (void*) 1, tail_index);
+    int res = cc_array_add_at(a, (void*) 1, tail_index);
 
-    if(res == CC_OK){
+    if(res != CC_ERR_MAX_CAPACITY){
         return false;
     }
 
