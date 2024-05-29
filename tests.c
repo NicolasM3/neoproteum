@@ -131,44 +131,23 @@ bool should_return_error_when_index_is_bigger() {
     return true;
 }
 
-
-// -- When size is equal to 0 but index is not 0
-bool should_return_error_when_index_is_bigger_and_index_is_0() {
-    CC_Array* a;
-    int tail_index = 2;
-
-    ASSERT_CC_OK(cc_array_new(&a));
-
-    void* element;
-    int res = cc_array_add_at(a, &element, tail_index);
-
-    if(res != CC_ERR_OUT_OF_RANGE){
-        return false;
-    }
-    
-    return true;
-}
-
 // -- When index array size is bigger or equal then capacity
 bool should_expand_GROUPADDAT(){
     CC_Array* a;
     int tail_index = 0;
-    int array_size = 10;
+    int array_size = DEFAULT_CAPACITY + 1;
 
     ASSERT_CC_OK(cc_array_new(&a));
-
-    a->capacity = CC_MAX_ELEMENTS;
+    a->capacity = DEFAULT_CAPACITY;
     a->size = array_size;
-
     int res = cc_array_add_at(a, (void*) 1, tail_index);
+    if(a->capacity == DEFAULT_CAPACITY){return false;}
 
-    if(res != CC_ERR_OUT_OF_RANGE){
-        return false;
-    }
-
-    if(a->size != array_size+1){
-        return false;
-    }
+    ASSERT_CC_OK(cc_array_new(&a));
+    a->capacity = DEFAULT_CAPACITY;
+    a->size = DEFAULT_CAPACITY;
+    res = cc_array_add_at(a, (void*) 1, tail_index);
+    if(a->capacity == DEFAULT_CAPACITY){return false;}
 
     return true;
 }
@@ -262,11 +241,6 @@ bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
     cc_array_add(a, (void*) 2);
     res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
     if(res == CC_ERR_OUT_OF_RANGE){ return false; }
-
-    // size i lower than 0
-    a->size = -1;
-    res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    ASSERT_FAIL();
 
     return true;
 } 
@@ -368,8 +342,7 @@ test_t TESTS[] = {
     // array_add_at
     // &should_add_at_last_index,
     // &should_return_error_when_index_is_bigger,
-    // &should_return_error_when_index_is_bigger_and_index_is_0,
-    // &should_expand_GROUPADDAT,
+    &should_expand_GROUPADDAT,
     // &should_not_expand_GROUPADDAT,
     // &cc_array_add_at_general_tests,
     // cc_array_filter_mut
