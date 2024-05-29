@@ -223,9 +223,9 @@ bool should_return_a_error_GROUPARRAYSWAPAT() {
     int index2 = 0;
     int array_size = 10;
 
-    a->size = array_size;
-
     ASSERT_CC_OK(cc_array_new(&a));
+
+    a->size = array_size;
 
     // One index is bigger then size
     int res = cc_array_swap_at(a, indexBigger, index2);
