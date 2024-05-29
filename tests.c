@@ -253,20 +253,20 @@ bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
     CC_Array* a;
     ASSERT_CC_OK(cc_array_new(&a));
 
-    // size is bigger than 0
-    a->size = 10;
+    // size is equal to 0
     int res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res != CC_OK){ return false; }
+
+    // size is bigger than 0
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
     if(res == CC_ERR_OUT_OF_RANGE){ return false; }
 
     // size i lower than 0
-    // a->size = -1;
-    // res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    // if(res == CC_ERR_OUT_OF_RANGE){ return false; }
-
-    // size is equal to 0
-    a->size = 0;
+    a->size = -1;
     res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
+    ASSERT_FAIL();
 
     return true;
 } 
@@ -373,7 +373,7 @@ test_t TESTS[] = {
     // &should_not_expand_GROUPADDAT,
     // &cc_array_add_at_general_tests,
     // cc_array_filter_mut
-    // &should_return_CC_OK_GROUPARRAYFILTERMUT,
+    &should_return_CC_OK_GROUPARRAYFILTERMUT,
     // cc_array_reduce
 
     &should_return_error_when_array_is_empty,
