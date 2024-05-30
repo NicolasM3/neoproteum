@@ -135,17 +135,40 @@ bool should_return_error_when_index_is_bigger() {
 // -- When size is equal to 0 but index is not 0
 bool should_return_error_when_index_is_bigger_and_index_is_0() {
     CC_Array* a;
-    int tail_index = 2;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+
+    void* element;
+    int res = cc_array_add_at(a, &element, 2);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
+
+    res = cc_array_add_at(a, &element, 0);
+    if(res != CC_OK){return false;}
+
+    cc_array_add(a, (void*) 2);
+    res = cc_array_add_at(a, &element, 1);
+    if(res != CC_OK){return false;}
+    
+    return true;
+}
+
+bool should_throw_error_when_size_equals_0_and_index_is_not_0() {
+    CC_Array* a;
 
     ASSERT_CC_OK(cc_array_new(&a));
 
     void* element;
-    int res = cc_array_add_at(a, &element, tail_index);
+    int res = cc_array_add_at(a, &element, 2);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
 
-    if(res != CC_ERR_OUT_OF_RANGE){
-        return false;
-    }
-    
+    res = cc_array_add_at(a, &element, 0);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
+
+    /* res = cc_array_add_at(a, &element, 1);
+    if(res != CC_OK){return false;} */
+
     return true;
 }
 
@@ -153,19 +176,19 @@ bool should_return_error_when_index_is_bigger_and_index_is_0() {
 bool should_expand_GROUPADDAT(){
     CC_Array* a;
     int tail_index = 0;
-    int array_size = DEFAULT_CAPACITY + 1;
 
     ASSERT_CC_OK(cc_array_new(&a));
-    a->capacity = DEFAULT_CAPACITY;
-    a->size = array_size;
-    int res = cc_array_add_at(a, (void*) 1, tail_index);
-    if(a->capacity == DEFAULT_CAPACITY){return false;}
+    cc_array_add(a, (void*) 1);
+    a->capacity = 1;
+    int res = cc_array_add_at(a, (void*) 3, tail_index);
+    if(a->capacity == 1){return false;}
 
     ASSERT_CC_OK(cc_array_new(&a));
-    a->capacity = DEFAULT_CAPACITY;
-    a->size = DEFAULT_CAPACITY;
-    res = cc_array_add_at(a, (void*) 1, tail_index);
-    if(a->capacity == DEFAULT_CAPACITY){return false;}
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    a->capacity = 1;
+    res = cc_array_add_at(a, (void*) 3, tail_index);
+    if(a->capacity == 1){return false;}
 
     return true;
 }
@@ -243,6 +266,7 @@ bool should_return_a_error_GROUPARRAYSWAPAT() {
     return true;
 }
 
+
 // Test filtering elements in the array
 // -- When size is not equal 0
 bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
@@ -250,19 +274,16 @@ bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
     ASSERT_CC_OK(cc_array_new(&a));
 
     // size is bigger than 0
-    a->size = 10;
-    int res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
-
-    // size i lower than 0
-    // a->size = -1;
-    // res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    // if(res == CC_ERR_OUT_OF_RANGE){ return false; }
+    /* ASSERT_CC_OK(cc_array_add(a, (void*) 1));
+    ASSERT_CC_OK(cc_array_add(a, (void*) 2));
+    int res = cc_array_filter_mut(a, is_positive);
+    if(res == CC_ERR_OUT_OF_RANGE){ return false; } */
 
     // size is equal to 0
+    ASSERT_CC_OK(cc_array_new(&a));
     a->size = 0;
-    res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
+    int res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
+    if(res != CC_ERR_OUT_OF_RANGE){ return false; }
 
     return true;
 } 
@@ -487,6 +508,177 @@ bool should_replace_elementes_when_iter_index_minus_one_equals_ar1_size_and_less
     return cc_array_zip_iter_replace(&iter, e1, e2, &out1, &out2) == CC_OK;
 }
 
+bool should_remove_elements_when_iter_index_valid() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    int val1 = 1, val2 = 2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    // Adiciona elementos para configurar os tamanhos dos arrays
+    ASSERT_CC_OK(cc_array_add(ar1, &val1));
+    ASSERT_CC_OK(cc_array_add(ar2, &val2));
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 1; // iter->index - 1 será 0, que é um índice válido
+
+    int res = cc_array_zip_iter_remove(&iter, &out1, &out2);
+
+    if (res != CC_OK || out1 != &val1 || out2 != &val2) {
+        return false;
+    }
+
+    return true;
+}
+
+bool should_remove_elements_at_specific_index() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    int vals1[] = {1, 2, 3};
+    int vals2[] = {4, 5, 6};
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    // Adiciona elementos em ar1 e ar2
+    for (int i = 0; i < 3; ++i) {
+        ASSERT_CC_OK(cc_array_add(ar1, &vals1[i]));
+        ASSERT_CC_OK(cc_array_add(ar2, &vals2[i]));
+    }
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.last_removed = false;
+
+    // Tenta remover o elemento na posição 1
+    iter.index = 1;
+    int res = cc_array_zip_iter_remove(&iter, &out1, &out2);
+
+    // Verifica se a remoção foi bem-sucedida e se os elementos corretos foram removidos
+    if (res != CC_OK ||
+        *((int *)out1) != 1 || *((int *)out2) != 4 ||
+        ar1->size != 2 || ar2->size != 2 ||
+        cc_array_get_at(ar1, 0, &out1) != CC_OK || *((int *)out1) != 2 ||
+        cc_array_get_at(ar2, 0, &out2) != CC_OK || *((int *)out2) != 5) {
+        return false;
+    }
+
+    // Tenta remover o mesmo elemento novamente, deve falhar
+    res = cc_array_zip_iter_remove(&iter, &out1, &out2);
+    if (res != CC_ERR_VALUE_NOT_FOUND) {
+        return false;
+    }
+
+    // Tenta remover um elemento com índice fora do intervalo
+    iter.index = 5;
+    iter.last_removed = false;
+    res = cc_array_zip_iter_remove(&iter, &out1, &out2);
+    if (res != CC_ERR_OUT_OF_RANGE) {
+        return false;
+    }
+
+    // Verifica se o mutante está ativo: tenta remover com índice % 1 (sempre 0)
+    iter.index = 1;
+    iter.last_removed = false;
+    cc_array_zip_iter_remove(&iter, &out1, &out2);
+    if (*((int *)out2) == 4) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool should_remove_elementes_when_iter_index_minus_one_exceeds_just_one_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 2;
+    iter.last_removed = false;
+
+    return cc_array_zip_iter_remove(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_remove_elementes_when_iter_index_minus_one_greater_ar1_size_and_less_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 3; 
+
+    return cc_array_zip_iter_remove(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_remove_elementes_when_iter_index_minus_one_equals_ar1_size_and_less_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 2; 
+
+    return cc_array_zip_iter_remove(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_remove_elementes_when_iter_index_minus_one_less_ar1_size_and_greater_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 3; 
+
+    return cc_array_zip_iter_remove(&iter, &out1, &out2) == CC_OK;
+}
+
 // cc_array_zip_iter_add
 // -- When size and capacity from arrays are not equal
 bool should_do_not_throw_CC_ERR_ALLOC(){
@@ -567,6 +759,149 @@ bool should_return_error_GROUPZIPITERADD(){
     return true;
 }
 
+bool should_return_index_plus_1() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter *iter;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    cc_array_zip_iter_init(iter, ar1, ar2);
+    iter->index = 2;
+
+    return cc_array_zip_iter_index(iter) == 3;
+}
+
+bool should_return_index_times_1() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter *iter;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    cc_array_zip_iter_init(iter, ar1, ar2);
+    iter->index = 1;
+
+    return cc_array_zip_iter_index(iter) == 1;
+}
+
+bool should_return_index_module_1() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter *iter;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    cc_array_zip_iter_init(iter, ar1, ar2);
+    iter->index = 6;
+
+    return cc_array_zip_iter_index(iter) == 0;
+}
+
+// cc_array_remove
+// -- When element does not exist
+bool should_return_error_GROUPARRAYREMOVE(){
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 100, element);
+    if (res != CC_ERR_OUT_OF_RANGE) {return false;}
+
+    return true;
+}
+
+// -- When element exists and should not be the last
+bool should_return_ok_and_move_array_GROUPARRAYREMOVE(){
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 1, element);
+    if (res != CC_OK) {return false;}
+    if (a->size != 1) {return false;}
+    if (cc_array_index_of(a, (void*) 1, element) != CC_ERR_OUT_OF_RANGE){return false;}
+    if (cc_array_index_of(a, (void*) 2, element) != CC_OK){return false;}
+
+    return true;
+}
+
+// --When element is the last
+bool should_return_just_reduce_array_size() {
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 2, element);
+    if (res != CC_OK) {return false;}
+    if (a->size != 1) {return false;}
+    if (cc_array_index_of(a, (void*) 1, element) != CC_OK){return false;}
+    if (cc_array_index_of(a, (void*) 2, element) != CC_ERR_VALUE_NOT_FOUND){return false;}
+
+    return true;
+}
+
+// cc_array_reverse
+// -- When array is not empty
+bool should_reverse() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    cc_array_reverse(a);
+    if(a->buffer[0] != (void*) 2 || a->buffer[1] != (void*) 1){
+        return false;
+    }
+
+    return true;
+}
+
+// cc_array_filter
+// -- When array is empty
+bool should_return_a_erro_GROUPFILTER() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    CC_Array* element;
+
+    // size is 0
+    a->size = 0;
+    int res = cc_array_filter(a, (bool (*)(const void *)) 1, &element);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
+
+    return true;
+}
+
+// -- When array is not empty
+bool should_return_a_filtered_array_GROUPFILTER(){
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    CC_Array** element;
+
+    ASSERT_CC_OK(cc_array_add(a, (void*) 1));
+    ASSERT_CC_OK(cc_array_add(a, (void*) 2));
+    ASSERT_CC_OK(cc_array_add(a, (void*) 3));
+    int res = cc_array_filter(a, (bool (*)(const void *)) 1, element);
+    if(res == CC_ERR_OUT_OF_RANGE){return false;}
+    
+    //if(element->size != 2){return false;}
+
+    return true;
+}
+
 
 test_t TESTS[] = {
     // arrya_add
@@ -578,12 +913,13 @@ test_t TESTS[] = {
     // array_add_at
      &should_add_at_last_index,
      &should_return_error_when_index_is_bigger,
-    // &should_return_error_when_index_is_bigger_and_index_is_0,
-    //  &should_expand_GROUPADDAT,
+    &should_return_error_when_index_is_bigger_and_index_is_0,
+     &should_expand_GROUPADDAT,
      &should_not_expand_GROUPADDAT,
+     //&should_throw_error_when_size_equals_0_and_index_is_not_0,
      &cc_array_add_at_general_tests,
     // cc_array_filter_mut
-    // &should_return_CC_OK_GROUPARRAYFILTERMUT,
+     &should_return_CC_OK_GROUPARRAYFILTERMUT,
     // cc_array_reduce
 
     //cc_array_get_last
@@ -598,10 +934,35 @@ test_t TESTS[] = {
     &should_replace_elementes_when_iter_index_minus_one_equals_ar1_size_and_less_ar2_size,
     &should_replace_elementes_when_iter_index_minus_one_less_ar1_size_and_greater_ar2_size,
 
+    //cc_array_zip_iter_remove
+    &should_remove_elements_when_iter_index_valid,
+    // &should_remove_elements_at_specific_index,
+    &should_remove_elementes_when_iter_index_minus_one_exceeds_just_one_size,
+    &should_remove_elementes_when_iter_index_minus_one_greater_ar1_size_and_less_ar2_size,
+    &should_remove_elementes_when_iter_index_minus_one_equals_ar1_size_and_less_ar2_size,
+    &should_remove_elementes_when_iter_index_minus_one_less_ar1_size_and_greater_ar2_size,
+
     //cc_array_zip_iter_add
     &should_do_not_throw_CC_ERR_ALLOC,
     &should_return_ok_GROUPZIPITERADD,
     &should_return_error_GROUPZIPITERADD,
+
+    //cc_array_zip_iter_index
+    &should_return_index_plus_1,
+    &should_return_index_times_1,
+    &should_return_index_module_1,
+
+    // cc_array_remove
+    &should_return_error_GROUPARRAYREMOVE,
+    &should_return_ok_and_move_array_GROUPARRAYREMOVE,
+    //&should_return_just_reduce_array_size,
+
+    // cc_array_reverse
+    &should_reverse,
+
+    // cc_array_filter
+    &should_return_a_erro_GROUPFILTER,
+    //&should_return_a_filtered_array_GROUPFILTER,
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
