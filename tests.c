@@ -1,6 +1,7 @@
 #include "lib.h"
 #include "tests.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
@@ -254,15 +255,11 @@ bool should_return_CC_OK_GROUPARRAYFILTERMUT() {
     int res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
     if(res == CC_ERR_OUT_OF_RANGE){ return false; }
 
-    // size i lower than 0
-    // a->size = -1;
-    // res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    // if(res == CC_ERR_OUT_OF_RANGE){ return false; }
-
     // size is equal to 0
+    ASSERT_CC_OK(cc_array_new(&a));
     a->size = 0;
     res = cc_array_filter_mut(a, (bool (*)(const void *)) 1);
-    if(res == CC_ERR_OUT_OF_RANGE){ return false; }
+    if(res != CC_ERR_OUT_OF_RANGE){ return false; }
 
     return true;
 } 
@@ -567,6 +564,109 @@ bool should_return_error_GROUPZIPITERADD(){
     return true;
 }
 
+// cc_array_remove
+// -- When element does not exist
+bool should_return_error_GROUPARRAYREMOVE(){
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 100, element);
+    if (res != CC_ERR_OUT_OF_RANGE) {return false;}
+
+    return true;
+}
+
+// -- When element exists and should not be the last
+bool should_return_ok_and_move_array_GROUPARRAYREMOVE(){
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 1, element);
+    if (res != CC_OK) {return false;}
+    if (a->size != 1) {return false;}
+    if (cc_array_index_of(a, (void*) 1, element) != CC_ERR_OUT_OF_RANGE){return false;}
+    if (cc_array_index_of(a, (void*) 2, element) != CC_OK){return false;}
+
+    return true;
+}
+
+// --When element is the last
+bool should_return_just_reduce_array_size() {
+    CC_Array* a;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    void* element;
+    int res = cc_array_remove(a, (void*) 2, element);
+    if (res != CC_OK) {return false;}
+    if (a->size != 1) {return false;}
+    if (cc_array_index_of(a, (void*) 1, element) != CC_OK){return false;}
+    if (cc_array_index_of(a, (void*) 2, element) != CC_ERR_VALUE_NOT_FOUND){return false;}
+
+    return true;
+}
+
+// cc_array_reverse
+// -- When array is not empty
+bool should_reverse() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+
+    cc_array_reverse(a);
+    if(a->buffer[0] != (void*) 2 || a->buffer[1] != (void*) 1){
+        return false;
+    }
+
+    return true;
+}
+
+// cc_array_filter
+// -- When array is empty
+bool should_return_a_erro_GROUPFILTER() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    CC_Array* element;
+
+    // size is 0
+    a->size = 0;
+    int res = cc_array_filter(a, (bool (*)(const void *)) 1, element);
+    if(res != CC_ERR_OUT_OF_RANGE){return false;}
+
+    return true;
+}
+
+// -- When array is not empty
+bool should_return_a_filtered_array_GROUPFILTER(){
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+    CC_Array* element;
+
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    cc_array_add(a, (void*) 3);
+    int res = cc_array_filter(a, (bool (*)(const void *)) 1, element);
+    if(res == CC_ERR_OUT_OF_RANGE){return false;}
+    if(res != CC_OK){ASSERT_FAIL();}
+    if(element->size != 2){return false;}
+
+    return true;
+}
 
 test_t TESTS[] = {
     // arrya_add
@@ -583,7 +683,7 @@ test_t TESTS[] = {
      &should_not_expand_GROUPADDAT,
      &cc_array_add_at_general_tests,
     // cc_array_filter_mut
-    // &should_return_CC_OK_GROUPARRAYFILTERMUT,
+    &should_return_CC_OK_GROUPARRAYFILTERMUT,
     // cc_array_reduce
 
     //cc_array_get_last
@@ -605,5 +705,18 @@ test_t TESTS[] = {
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
+
+    // cc_array_remove
+    &should_return_error_GROUPARRAYREMOVE,
+    &should_return_ok_and_move_array_GROUPARRAYREMOVE,
+    &should_return_just_reduce_array_size,
+
+    // cc_array_reverse
+    &should_reverse,
+
+    // cc_array_filter
+    &should_return_a_erro_GROUPFILTER,
+    &should_return_a_filtered_array_GROUPFILTER,
+
     NULL
 };
