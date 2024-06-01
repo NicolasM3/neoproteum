@@ -965,6 +965,118 @@ bool should_return_just_reduce_array_size_GROUPARRAYREMOVEAT() {
     return true;
 }
 
+// cc_array_zip_iter_next
+bool should_go_to_next_index_when_iter_index_valid() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    int val1 = 1, val2 = 2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    // Adiciona elementos para configurar os tamanhos dos arrays
+    ASSERT_CC_OK(cc_array_add(ar1, &val1));
+    ASSERT_CC_OK(cc_array_add(ar2, &val2));
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 0; // iter->index será 0, que é um índice válido
+
+    int res = cc_array_zip_iter_next(&iter, &out1, &out2);
+
+    if (res != CC_OK || out1 != &val1 || out2 != &val2  || iter.index != 1) {
+        return false;
+    }
+
+    return true;
+}
+
+bool should_go_to_next_index_when_iter_index_less_ar1_and_equals_ar2() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 1; 
+
+    return cc_array_zip_iter_next(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_go_to_next_index_when_iter_index_greater_ar1_size_and_less_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 2; 
+
+    return cc_array_zip_iter_next(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_go_to_next_index_when_iter_index_less_ar1_size_and_greater_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar1, e2));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 2; 
+
+    return cc_array_zip_iter_next(&iter, &out1, &out2) == CC_OK;
+}
+
+bool should_go_to_next_index_when_iter_index_equals_ar1_size_and_less_ar2_size() {
+    CC_Array *ar1, *ar2;
+    CC_ArrayZipIter iter;
+    void *e1 = (void *)1, *e2 = (void *)2;
+    void *out1, *out2;
+
+    ASSERT_CC_OK(cc_array_new(&ar1));
+    ASSERT_CC_OK(cc_array_new(&ar2));
+
+    ASSERT_CC_OK(cc_array_add(ar1, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e1));
+    ASSERT_CC_OK(cc_array_add(ar2, e2));
+    
+
+    iter.ar1 = ar1;
+    iter.ar2 = ar2;
+    iter.index = 1; 
+
+    return cc_array_zip_iter_next(&iter, &out1, &out2) == CC_OK;
+}
+
 test_t TESTS[] = {
     // arrya_add
     &should_not_expand,
@@ -1019,15 +1131,25 @@ test_t TESTS[] = {
     &should_return_ok_and_move_array_GROUPARRAYREMOVE,
     //&should_return_just_reduce_array_size,
 
-    // cc_array_remove_at
-
-
     // cc_array_reverse
     &should_reverse,
 
     // cc_array_filter
     &should_return_a_erro_GROUPFILTER,
     //&should_return_a_filtered_array_GROUPFILTER,
+
+    // cc_array_zip_iter_next
+    &should_go_to_next_index_when_iter_index_valid,
+    &should_go_to_next_index_when_iter_index_less_ar1_and_equals_ar2,
+    &should_go_to_next_index_when_iter_index_greater_ar1_size_and_less_ar2_size,
+    &should_go_to_next_index_when_iter_index_less_ar1_size_and_greater_ar2_size,
+    &should_go_to_next_index_when_iter_index_equals_ar1_size_and_less_ar2_size,
+
+
+    // cc_array_remove_at
+    // &should_return_a_error_GROUPARRAYREMOVEAT,
+    // &should_return_ok_and_move_array_GROUPARRAYREMOVEAT,
+    // &should_return_just_reduce_array_size_GROUPARRAYREMOVEAT,
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
