@@ -1077,6 +1077,28 @@ bool should_go_to_next_index_when_iter_index_equals_ar1_size_and_less_ar2_size()
     return cc_array_zip_iter_next(&iter, &out1, &out2) == CC_OK;
 }
 
+// cc_array_trim_capacity
+// -- When array is not equal to capacity
+bool should_return_trim() {
+    CC_Array* a;
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    a->capacity = 10;
+
+    ASSERT_CC_OK(cc_array_add(a, (void*) 1));
+    ASSERT_CC_OK(cc_array_add(a, (void*) 2));
+
+    int res = cc_array_trim_capacity(a);
+    if(a->capacity != a->size){return false;}
+    if(res == CC_ERR_ALLOC){return false;}
+
+    cc_array_trim_capacity(a);
+    if(a->capacity != a->size){return false;}
+    if(res == CC_ERR_ALLOC){return false;}
+
+    return true;
+}
+
 test_t TESTS[] = {
     // arrya_add
     &should_not_expand,
@@ -1150,6 +1172,9 @@ test_t TESTS[] = {
     // &should_return_a_error_GROUPARRAYREMOVEAT,
     // &should_return_ok_and_move_array_GROUPARRAYREMOVEAT,
     // &should_return_just_reduce_array_size_GROUPARRAYREMOVEAT,
+
+    // cc_array_trim_capacity
+    &should_return_trim,
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
