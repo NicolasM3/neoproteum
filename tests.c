@@ -1099,6 +1099,35 @@ bool should_return_trim() {
     return true;
 }
 
+// cc_array_iter_next
+// -- When iter index is bigget than array size
+bool should_throw_iter_end_error() {
+    CC_Array* a;
+    CC_ArrayIter iter;
+
+    ASSERT_CC_OK(cc_array_add(a, (void*) 1));
+
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_iter_init(&iter, a);
+
+    void* element;
+    int res = cc_array_iter_next(&iter, &element);
+    if(res != CC_OK){return false;}
+    if(element != (void*) 1){return false;}
+    if(iter.index != 1){return false;}
+
+    res = cc_array_iter_next(&iter, &element);
+    if(res != CC_ITER_END){return false;}
+
+    iter.index = 10;
+    res = cc_array_iter_next(&iter, &element);
+    if(res != CC_ITER_END){return false;}
+
+    return true;
+}
+
+
+
 test_t TESTS[] = {
     // arrya_add
     &should_not_expand,
