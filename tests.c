@@ -911,7 +911,7 @@ bool should_return_a_error_GROUPARRAYREMOVEAT() {
 
     ASSERT_CC_OK(cc_array_add(a, (void*) 1))
 
-    void* out;
+    CC_Array* out;
     // One index is bigger then size
     int res = cc_array_remove_at(a, 100, out);
     if(res != CC_ERR_OUT_OF_RANGE){return false;}
@@ -936,7 +936,7 @@ bool should_return_ok_and_move_array_GROUPARRAYREMOVEAT(){
     cc_array_add(a, (void*) 1);
     cc_array_add(a, (void*) 2);
 
-    void* element;
+    CC_Array* element;
     int res = cc_array_remove_at(a, 0, element);
     if (res != CC_OK) {return false;}
     if (a->size != 1) {return false;}
@@ -955,7 +955,7 @@ bool should_return_just_reduce_array_size_GROUPARRAYREMOVEAT() {
     cc_array_add(a, (void*) 1);
     cc_array_add(a, (void*) 2);
 
-    void* element;
+    CC_Array* element;
     int res = cc_array_remove_at(a,  1, element);
     if (res != CC_OK) {return false;}
     if (a->size != 1) {return false;}
