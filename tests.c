@@ -940,8 +940,9 @@ bool should_return_ok_and_move_array_GROUPARRAYREMOVEAT(){
     int res = cc_array_remove_at(a, 0, &element);
     if (res != CC_OK) {return false;}
     if (a->size != 1) {return false;}
-    if (cc_array_index_of(a, (void*) 1, element) != CC_ERR_OUT_OF_RANGE){return false;}
-    if (cc_array_index_of(a, (void*) 2, element) != CC_OK){return false;}
+    size_t* index;
+    if (cc_array_index_of(a, (void*) 1, index) != CC_OK){return false;}
+    if (cc_array_index_of(a, (void*) 2, index) != CC_ERR_VALUE_NOT_FOUND){return false;}
 
     return true;
 }
@@ -959,8 +960,9 @@ bool should_return_just_reduce_array_size_GROUPARRAYREMOVEAT() {
     int res = cc_array_remove_at(a,  1, &element);
     if (res != CC_OK) {return false;}
     if (a->size != 1) {return false;}
-    if (cc_array_index_of(a, (void*) 1, element) != CC_OK){return false;}
-    if (cc_array_index_of(a, (void*) 2, element) != CC_ERR_VALUE_NOT_FOUND){return false;}
+    size_t* index;
+    if (cc_array_index_of(a, (void*) 1, index) != CC_OK){return false;}
+    if (cc_array_index_of(a, (void*) 2, index) != CC_ERR_VALUE_NOT_FOUND){return false;}
 
     return true;
 }
@@ -1105,9 +1107,9 @@ bool should_throw_iter_end_error() {
     CC_Array* a;
     CC_ArrayIter iter;
 
+    ASSERT_CC_OK(cc_array_new(&a));
     ASSERT_CC_OK(cc_array_add(a, (void*) 1));
 
-    ASSERT_CC_OK(cc_array_new(&a));
     cc_array_iter_init(&iter, a);
 
     void* element;
@@ -1119,14 +1121,134 @@ bool should_throw_iter_end_error() {
     res = cc_array_iter_next(&iter, &element);
     if(res != CC_ITER_END){return false;}
 
-    iter.index = 10;
-    res = cc_array_iter_next(&iter, &element);
-    if(res != CC_ITER_END){return false;}
+    return true;
+}
+
+// cc_array_iter_remove
+// when index is correctly reduced
+bool should_iter_last_removed_should_be_true() {
+    CC_Array* a;
+    CC_ArrayIter iter;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    cc_array_add(a, (void*) 3);
+
+    void* out;
+
+    cc_array_iter_next(&iter, &out);
+
+    cc_array_iter_init(&iter, a);
+    int res = cc_array_iter_remove(&iter, &out);
+    if(res != CC_OK){return false;}
+    if(out != (void*) 1){return false;}
+    if(iter.last_removed != true){return false;}
+    if(a->buffer[0] != (void*) 2){return false;}
+    if(a->buffer[1] != (void*) 3){return false;}
 
     return true;
 }
 
+// cc_array_iter_index
+// -- when index is correctly returned
+bool should_return_index_less_1() {
+    CC_Array* a;
+    CC_ArrayIter iter;
 
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    cc_array_add(a, (void*) 3);
+
+    cc_array_iter_init(&iter, a);
+
+    void* element;
+    
+    int res = cc_array_iter_next(&iter, &element);
+    if(res != CC_OK){return false;}
+    if(cc_array_iter_index(&iter) != 0){return false;}
+
+    res = cc_array_iter_next(&iter, &element);
+    if(res != CC_OK){return false;}
+    if(cc_array_iter_index(&iter) != 1){return false;}
+
+    res = cc_array_iter_next(&iter, &element);
+    if(res != CC_OK){return false;}
+    if(cc_array_iter_index(&iter) != 2){return false;}
+
+    return true;
+}
+
+// cc_array_iter_replace
+// -- When element is replace
+bool should_replace_inter_index_less_1() {
+    CC_Array* a;
+    CC_ArrayIter iter;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+    cc_array_add(a, (void*) 1);
+    cc_array_add(a, (void*) 2);
+    cc_array_add(a, (void*) 3);
+
+    cc_array_iter_init(&iter, a);
+
+    void* out;
+
+    int res = cc_array_iter_replace(&iter, (void*) 4, &out);
+    if(res != CC_OK){return false;}
+    if(out != (void*) 1){return false;}
+    if(a->buffer[0] != (void*) 4){return false;}
+
+    res = cc_array_iter_next(&iter, &out);
+    
+    res = cc_array_iter_replace(&iter, (void*) 10, &out);
+    if(res != CC_OK){return false;}
+    if(out != (void*) 2){return false;}
+    if(a->buffer[1] != (void*) 10){return false;}
+
+    res = cc_array_iter_next(&iter, &out);
+
+    res = cc_array_iter_replace(&iter, (void*) 14, &out);
+    if(res != CC_OK){return false;}
+    if(out != (void*) 3){return false;}
+    if(a->buffer[2] != (void*) 14){return false;}
+
+    if(a->buffer[0] != (void*) 4){return false;}
+    if(a->buffer[1] != (void*) 10){return false;}
+    if(a->buffer[2] != (void*) 14){return false;}
+
+    return true;
+}
+
+// cc_array_reduce
+
+void add(void *a, void *b, void *result) {
+    *(int *)result = *(int *)a + (b ? *(int *)b : 0);
+}
+
+bool should_reduce_with_size_zero() {
+    CC_Array *a;
+    int result = 0;
+
+    ASSERT_CC_OK(cc_array_new(&a));
+
+    cc_array_reduce(a, add, &result);
+    // Esperamos que `result` permaneça 0, pois não há elementos para reduzir
+    return result == 0;
+}
+
+bool should_reduce_with_size_2() {
+    CC_Array *ar;
+    int result = 0, value1 = 5, value2 = 10;
+
+    ASSERT_CC_OK(cc_array_new(&ar));
+    ASSERT_CC_OK(cc_array_add(ar, &value1));
+    ASSERT_CC_OK(cc_array_add(ar, &value2));
+
+    cc_array_reduce(ar, add, &result);
+    return result == 15;
+}
 
 test_t TESTS[] = {
     // arrya_add
@@ -1143,6 +1265,7 @@ test_t TESTS[] = {
      &should_not_expand_GROUPADDAT,
      //&should_throw_error_when_size_equals_0_and_index_is_not_0,
      &cc_array_add_at_general_tests,
+
     // cc_array_filter_mut
      &should_return_CC_OK_GROUPARRAYFILTERMUT,
     // cc_array_reduce
@@ -1198,12 +1321,28 @@ test_t TESTS[] = {
 
 
     // cc_array_remove_at
-    // &should_return_a_error_GROUPARRAYREMOVEAT,
-    // &should_return_ok_and_move_array_GROUPARRAYREMOVEAT,
+    &should_return_a_error_GROUPARRAYREMOVEAT,
+    &should_return_ok_and_move_array_GROUPARRAYREMOVEAT,
     // &should_return_just_reduce_array_size_GROUPARRAYREMOVEAT,
 
     // cc_array_trim_capacity
     &should_return_trim,
+
+    //cc_array_iter_next
+    &should_throw_iter_end_error,
+
+    // cc_array_iter_remove
+    &should_iter_last_removed_should_be_true,
+
+    // cc_array_iter_index
+    &should_return_index_less_1,
+
+    // cc_array_iter_replace
+    &should_replace_inter_index_less_1,
+
+    // cc_array_reduce
+    &should_reduce_with_size_zero,
+    &should_reduce_with_size_2,
 
     // cc_array_swap_at
     &should_return_a_error_GROUPARRAYSWAPAT,
